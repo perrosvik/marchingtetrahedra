@@ -189,21 +189,34 @@ public class quadScript : MonoBehaviour
         return plerp;
     }
 
-    void MarchingTetrahederOnCTScan()
+    float calculateDensity(int x, int y, int z)
+    {
+        // dersom du er på en av de 6 ytterste flatene av kuben, returner null.
+        if (x == 0 || y == 0 || z == 0 || x == _xdim+1|| y == _ydim+1 || z == _zdim+1)
+        {
+            return 0.0f;
+        }
+
+        int fx = x - 1;
+        int fy = y - 1;
+        int fz = z - 1;
+
+        return _slices[fz].getPixels()[fx + fy * _xdim];
+    }
+
+
+    void MarchingTetrahederOnCTScan(float iso)
     {
         vertices = new List<Vector3>();
         indices = new List<int>();
         index = 0;
-        for (int z = 0; z < _zdim-1; z++)
+        for (int z = 0; z < _zdim+1; z++)
         {
-            ushort[] pixels = _slices[z].getPixels();
-            ushort[] nextSlicePixels = _slices[z+1].getPixels();
             float worldZ = (z / 100.0f) - 0.5f;
-
-            for (int y = 0; y < _ydim-1; y++)
+            for (int y = 0; y < _ydim+1; y++)
             {
                 float worldY = (y / 100.0f) - 0.5f;
-                for (int x = 0; x < _xdim-1; x++)
+                for (int x = 0; x < _xdim+1; x++)
                 {
                     float worldX = (x / 100.0f) - 0.5f;
                           
@@ -217,15 +230,15 @@ public class quadScript : MonoBehaviour
                     Vector3 p3 = new Vector3(worldX + step, worldY + step, worldZ + step);
                     Vector3 p2 = new Vector3(worldX, worldY + step, worldZ + step);
                     
-                    float v4 = pixels[x + y * _xdim];
-                    float v5 = pixels[(x + 1) + y * _xdim];
-                    float v7 = pixels[(x + 1) + (y + 1) * _xdim];
-                    float v6 = pixels[x + (y + 1) * _xdim];
+                    float v4 = calculateDensity(x, y, z);//pixels[x + y * _xdim];
+                    float v5 = calculateDensity(x + 1, y, z); //pixels[(x + 1) + y * _xdim];
+                    float v7 = calculateDensity(x + 1, y + 1, z); //pixels[(x + 1) + (y + 1) * _xdim];
+                    float v6 = calculateDensity(x, y + 1, z);//pixels[x + (y + 1) * _xdim];
 
-                    float v0 = nextSlicePixels[x + y * _xdim];
-                    float v1 = nextSlicePixels[(x + 1) + y * _xdim];
-                    float v3 = nextSlicePixels[(x + 1) + (y + 1) * _xdim];
-                    float v2 = nextSlicePixels[x + (y + 1) * _xdim];
+                    float v0 = calculateDensity(x, y, z + 1); //nextSlicePixels[x + y * _xdim];
+                    float v1 = calculateDensity(x + 1, y, z + 1); //nextSlicePixels[(x + 1) + y * _xdim];
+                    float v3 = calculateDensity(x + 1, y + 1, z + 1); //nextSlicePixels[(x + 1) + (y + 1) * _xdim];
+                    float v2 = calculateDensity(x, y + 1, z + 1); //nextSlicePixels[x + (y + 1) * _xdim];
 
                     DoTetra(_iso, p4, p6, p0, p7, v4, v6, v0, v7);
                     DoTetra(_iso, p6, p0, p7, p2, v6, v0, v7, v2);
@@ -393,13 +406,13 @@ public class quadScript : MonoBehaviour
         //MarchingSquares(val);
         MarchingTetraheder(val);
         //MarchingTetrahederOnCTScan(val);
-        //this.iso = val;
+        this.iso = val;
     }
 
     public void button1Pushed()
     {
         print("button1Pushed");
-        MarchingTetrahederOnCTScan();
+        MarchingTetrahederOnCTScan(this.iso);
     }
 
     public void button2Pushed()
